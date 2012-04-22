@@ -438,7 +438,7 @@ sub alien_generate_manual_pkgconfig {
 
   #if no provides_libs then generate -l list from found files
   unless ($provides_libs) {
-    my @files = map { "-l$_" } @{$paths->{so_files}};
+    my @files = map { "-l$_" } @{$paths->{a_files}};
     $provides_libs = join( ' ', @files );
   } 
 
@@ -476,31 +476,32 @@ sub alien_find_lib_paths {
   @libs = map { /-l(.*)/ ? $1 : () } split /\s+/, $libs if $libs;
   $libs[0] = '' unless @libs; #find all so files if no provides_libs;
 
-  my $ext = $self->config('so'); #platform specific .so extension
+  my $ext = $self->config('lib_ext'); #platform specific .a extension
+  $ext =~ s/^\.//;
 
-  my @so_files = sort #easier testing
+  my @a_files = sort #easier testing
     map { File::Spec->abs2rel( $_, $dir ) } # make relative to $dir
-    map { @{ $self->rscan_dir($dir, qr/$_\.$ext$/) } } #find all .so
+    map { @{ $self->rscan_dir($dir, qr/$_\.$ext$/) } } #find all .a
     @libs;
 
   my @lib_paths = uniq
     map { File::Spec->catdir($_) } # remove trailing /
     map { ( File::Spec->splitpath($_) )[1] } # get only directory
-    @so_files;
+    @a_files;
 
-  @so_files = 
+  @a_files = 
     map { my $file = $_; $file =~ s/^(?:lib)?(.*?)\.$ext$/$1/; $file }
     map { ( File::Spec->splitpath($_) )[2] } 
-    @so_files;
+    @a_files;
 
   my @inc_paths = uniq
     map { File::Spec->catdir($_) } # remove trailing /
     map { ( File::Spec->splitpath($_) )[1] } # get only directory
     map { File::Spec->abs2rel( $_, $dir ) } # make relative to $dir
-    map { @{ $self->rscan_dir($dir, qr/$_\.h$/) } } #find all .so
+    map { @{ $self->rscan_dir($dir, qr/$_\.h$/) } } #find all .a
     @libs;
 
-  return { lib => \@lib_paths, inc => \@inc_paths, so_files => \@so_files };
+  return { lib => \@lib_paths, inc => \@inc_paths, a_files => \@a_files };
 }
 
 1;
