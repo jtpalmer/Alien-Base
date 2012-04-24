@@ -434,6 +434,10 @@ sub alien_generate_manual_pkgconfig {
     map { File::Spec->catdir( '-L${alien_dist_dir}', $_ ) }
     @{$paths->{lib}};
 
+  my @rpath = 
+    map { File::Spec->catdir( '-Wl,-rpath,${alien_dist_dir}', $_ ) }
+    @{$paths->{lib}};
+
   my $provides_libs = $self->alien_provides_libs;
 
   #if no provides_libs then generate -l list from found files
@@ -442,7 +446,7 @@ sub alien_generate_manual_pkgconfig {
     $provides_libs = join( ' ', @files );
   } 
 
-  my $libs = join( ' ', @L, $provides_libs );
+  my $libs = join( ' ', (@L, @rpath), $provides_libs );
 
   my @I = 
     map { File::Spec->catdir( '-I${alien_dist_dir}', $_ ) }
